@@ -6,14 +6,9 @@ import qs.services
 import qs.modules.common
 import qs.modules.common.functions
 import qs.modules.waffle.looks
+import qs.modules.waffle.actionCenter
 
-Rectangle {
-    Layout.fillHeight: false
-    Layout.fillWidth: true
-    color: Looks.colors.bgPanelFooter
-
-    implicitWidth: 360
-    implicitHeight: 47
+FooterRectangle {
 
     // Battery button
     WPanelFooterButton {
@@ -27,7 +22,11 @@ Rectangle {
 
             FluentIcon {
                 anchors.verticalCenter: parent.verticalCenter
-                icon: WIcons.batteryIcon
+                icon: WIcons.batteryLevelIcon
+                FluentIcon {
+                    anchors.fill: parent
+                    icon: WIcons.batteryIcon
+                }
             }
             WText {
                 anchors.verticalCenter: parent.verticalCenter
