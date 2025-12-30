@@ -141,6 +141,35 @@ WindowDialog {
             onMoved: root.brightnessMonitor.setBrightness(value)
         }
     }
+
+    WindowDialogSectionHeader {
+      text: "Adaptive Brightness"
+    }
+
+    Column {
+      id: adpativeBrighntessColumn
+      Layout.topMargin: -16
+      Layout.fillWidth: true
+      Layout.fillHeight: true
+
+      ConfigSwitch {
+            anchors {
+                left: parent.left
+                right: parent.right
+            }
+            iconSize: Appearance.font.pixelSize.larger
+            buttonIcon: "brightness_auto"
+            text: Translation.tr("Enable")
+            checked: Config.options.light.environmentAdapt.enable
+            onCheckedChanged: {
+                Config.options.light.environmentAdapt.enable = checked;
+            }
+            StyledToolTip {
+                text: Translation.tr("Automatically adjusts the brightness of the screen according to the environment")
+            }
+
+      }
+    }
     
     WindowDialogButtonRow {
         Layout.fillWidth: true

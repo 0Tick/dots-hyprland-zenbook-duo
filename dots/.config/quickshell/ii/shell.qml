@@ -55,6 +55,10 @@ ShellRoot {
     property bool enableVerticalBar: true
     property bool enableWallpaperSelector: true
 
+    ZenbookDuoService {
+      id: zenbookService
+    }
+
     // Force initialization of some singletons
     Component.onCompleted: {
         MaterialThemeLoader.reapplyTheme()

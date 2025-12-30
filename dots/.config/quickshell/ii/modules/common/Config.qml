@@ -308,6 +308,9 @@ Singleton {
                 property JsonObject antiFlashbang: JsonObject {
                     property bool enable: false
                 }
+                property JsonObject environmentAdapt: JsonObject {
+                    property bool enable: true
+                }                
             }
 
             property JsonObject lock: JsonObject {
