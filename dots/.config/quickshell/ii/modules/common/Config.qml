@@ -312,6 +312,10 @@ Singleton {
                     property bool enable: true
                 }                
             }
+ 
+            property JsonObject zenbookDuo: JsonObject {
+                property bool sharedScreen: false
+            }
 
             property JsonObject lock: JsonObject {
                 property bool useHyprlock: false

@@ -55,10 +55,6 @@ ShellRoot {
     property bool enableVerticalBar: true
     property bool enableWallpaperSelector: true
 
-    ZenbookDuoService {
-      id: zenbookService
-    }
-
     // Force initialization of some singletons
     Component.onCompleted: {
         MaterialThemeLoader.reapplyTheme()
@@ -67,6 +63,7 @@ ShellRoot {
         ConflictKiller.load()
         Cliphist.refresh()
         Wallpapers.load()
+        ZenbookDuoService.load()
     }
 
     LazyLoader { active: enableBar && Config.ready && !Config.options.bar.vertical; component: Bar {} }
