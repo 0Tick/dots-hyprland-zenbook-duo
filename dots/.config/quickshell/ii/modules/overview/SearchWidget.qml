@@ -142,6 +142,24 @@ Item { // Wrapper
         }
     }
 
+    Timer {
+        id: nixpkgsSearchDebounce
+        interval: 300
+        onTriggered: {
+          Nixpkgs.queryString = StringUtils.cleanPrefix(root.searchingText, Config.options.search.prefix.nixpkgs);
+          Nixpkgs.refresh();
+        }
+    }
+
+    Connections {
+        target: root
+        function onSearchingTextChanged(){
+            if (root.searchingText.startsWith(Config.options.search.prefix.nixpkgs)) {
+                nixpkgsSearchDebounce.restart();
+            }
+        }
+    }
+
     Keys.onPressed: event => {
         // Prevent Esc and Backspace from registering
         if (event.key === Qt.Key_Escape)
@@ -318,6 +336,8 @@ Item { // Wrapper
                     id: model
                     objectProp: "key"
                     values: {
+
+                        const _trigger = Nixpkgs.updateCount; 
                         // Search results are handled here
                         ////////////////// Skip? //////////////////
                         if (root.searchingText == "")
@@ -381,6 +401,23 @@ Item { // Wrapper
                                     }
                                 };
                             }).filter(Boolean);
+                        }
+                        else if (root.searchingText.startsWith(Config.options.search.prefix.nixpkgs)){
+                          return Nixpkgs.entries.map(entry => {
+                              const pkgName = entry.header.split('.').pop();
+                              return {
+                                key: entry.header,
+                                name: entry.header,
+                                type: "Nixpkgs",
+                                materialSymbol: 'deployed_code',
+                                execute: () => { 
+                                    Quickshell.execDetached([
+                                      "bash", "-c", 
+                                      `nix run nixpkgs#${pkgName}`
+                                  ]);
+                                }
+                              }
+                            });
                         }
 
                         ////////////////// Init ///////////////////

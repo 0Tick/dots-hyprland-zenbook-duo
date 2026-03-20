@@ -403,11 +403,13 @@ Singleton {
                     property string math: "="
                     property string shellCommand: "$"
                     property string webSearch: "?"
+                    property string nixpkgs: "."
                 }
                 property JsonObject imageSearch: JsonObject {
                     property string imageSearchEngineBaseUrl: "https://lens.google.com/uploadbyurl?url="
                     property bool useCircleSelection: false
-                }
+                  }
+                  property list<string> nixSearchBaseCommand: ["nix", "search", "nixpkgs"]
             }
 
             property JsonObject sidebar: JsonObject {
