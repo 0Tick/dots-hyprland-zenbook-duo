@@ -253,6 +253,8 @@ Singleton {
                 property int full: 101
                 property bool automaticSuspend: true
                 property int suspend: 3
+                property int batteryMaxCharge: 80
+                property bool maxChargeEnabled: true
             }
 
             property JsonObject conflictKiller: JsonObject {

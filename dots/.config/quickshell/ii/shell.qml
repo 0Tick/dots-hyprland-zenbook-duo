@@ -65,6 +65,7 @@ ShellRoot {
         Wallpapers.load()
         ZenbookDuoService.load()
         Nixpkgs.refresh()
+        BatteryHealth.setState()
     }
 
     LazyLoader { active: enableBar && Config.ready && !Config.options.bar.vertical; component: Bar {} }
