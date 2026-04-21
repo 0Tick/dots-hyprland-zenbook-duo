@@ -114,6 +114,16 @@ Singleton {
         ddcMonitors = [];
         ddcProc.running = true;
     }
+
+    function initializeMonitor(i: int): void {
+        if (i >= monitors.length)
+            return;
+        monitors[i].initialize();
+    }
+
+    function ddcDetectFinished(): void {
+        initializeMonitor(0);
+    }
     
     Process {
         id: ambientSensorProc
@@ -158,13 +168,13 @@ Singleton {
                 if (data.startsWith("Display ")) {
                     const lines = data.split("\n").map(l => l.trim());
                     root.ddcMonitors.push({
-                        model: lines.find(l => l.startsWith("Monitor:")).split(":")[2],
+                        name: lines.find(l => l.startsWith("DRM connector:")).split("-").slice(1).join('-'),
                         busNum: lines.find(l => l.startsWith("I2C bus:")).split("/dev/i2c-")[1]
                     });
                 }
             }
         }
-        onExited: root.ddcMonitorsChanged()
+        onExited: root.ddcDetectFinished()
     }
 
     Process {
@@ -189,7 +199,7 @@ Singleton {
         property int rawMaxBrightness: 100
         property real brightness
         property real brightnessMultiplier: 1.0
-        property real multipliedBrightness: Math.max(0, Math.min(1, brightness * brightnessMultiplier))
+        property real multipliedBrightness: Math.max(0, Math.min(1, brightness * (Config.options.light.antiFlashbang.enable ? brightnessMultiplier : 1)))
         property bool ready: false
         property bool animateChanges: !monitor.isDdc
 
@@ -213,6 +223,9 @@ Singleton {
 
         function initialize() {
             monitor.ready = false;
+            const match = root.ddcMonitors.find(m => m.name === screen.name && !root.monitors.slice(0, root.monitors.indexOf(this)).some(mon => mon.busNum === m.busNum));
+            isDdc = !!match;
+            busNum = match?.busNum ?? "";
             initProc.command = isDdc ? ["ddcutil", "-b", busNum, "getvcp", "10", "--brief"] : ["sh", "-c", `echo "a b c $(brightnessctl g) $(brightnessctl m)"`];
             initProc.running = true;
         }
@@ -226,6 +239,9 @@ Singleton {
                     monitor.ready = true;
                 }
             }
+            onExited: (exitCode, exitStatus) => {
+                initializeMonitor(root.monitors.indexOf(monitor) + 1);
+            }
         }
 
         // We need a delay for DDC monitors because they can be quite slow and might act weird with rapid changes
@@ -238,10 +254,16 @@ Singleton {
         }
 
         function syncBrightness() {
-            const brightnessValue = Math.max(monitor.multipliedBrightness, 0)
-            const rawValueRounded = Math.max(Math.floor(brightnessValue * monitor.rawMaxBrightness), 1);
-            setProc.command = isDdc ? ["ddcutil", "-b", busNum, "setvcp", "10", rawValueRounded] : ["brightnessctl", "--class", "backlight", "s", rawValueRounded, "--quiet"];
-            setProc.startDetached();
+            const brightnessValue = Math.max(monitor.multipliedBrightness, 0);
+            if (isDdc) {
+                const rawValueRounded = Math.max(Math.floor(brightnessValue * monitor.rawMaxBrightness), 1);
+                setProc.exec(["ddcutil", "-b", busNum, "setvcp", "10", rawValueRounded]);
+            } else {
+                const valuePercentNumber = Math.floor(brightnessValue * 100);
+                let valuePercent = `${valuePercentNumber}%`;
+                if (valuePercentNumber == 0) valuePercent = "1"; // Prevent fully black
+                setProc.exec(["brightnessctl", "--class", "backlight", "s", valuePercent, "--quiet"])
+            }
         }
 
         function setBrightness(value: real): void {
@@ -251,14 +273,6 @@ Singleton {
 
         function setBrightnessMultiplier(value: real): void {
             monitor.brightnessMultiplier = value;
-        }
-
-        Component.onCompleted: {
-            initialize();
-        }
-
-        onBusNumChanged: {
-            initialize();
         }
     }
 
@@ -310,7 +324,7 @@ Singleton {
 
             Process {
                 id: screenshotProc
-                command: ["bash", "-c", 
+                command: ["bash", "-c",
                     `mkdir -p '${StringUtils.shellSingleQuoteEscape(root.screenshotDir)}'`
                     + ` && grim -o '${StringUtils.shellSingleQuoteEscape(screenScope.screenName)}' -`
                     + ` | magick png:- -colorspace Gray -format "%[fx:mean*100]" info:`
