@@ -101,19 +101,19 @@ Scope {
     }
 
     GlobalShortcut {
-        name: "searchToggle"
-        description: "Toggles search on press"
-
-        onPressed: {
-            GlobalStates.searchOpen = !GlobalStates.searchOpen;
-        }
-    }
-    GlobalShortcut {
+        id: searchToggleReleaseShortcut
         name: "searchToggleRelease"
         description: "Toggles search on release"
+        
+        // Ignore the immediate interrupt from the Super key itself
+        property bool superJustPressed: false
 
         onPressed: {
             GlobalStates.superReleaseMightTrigger = true;
+            superJustPressed = true;
+            Qt.callLater(() => {
+                searchToggleReleaseShortcut.superJustPressed = false;
+            });
         }
 
         onReleased: {
@@ -129,6 +129,7 @@ Scope {
         description: "Interrupts possibility of search being toggled on release. " + "This is necessary because GlobalShortcut.onReleased in quickshell triggers whether or not you press something else while holding the key. " + "To make sure this works consistently, use binditn = MODKEYS, catchall in an automatically triggered submap that includes everything."
 
         onPressed: {
+            if (searchToggleReleaseShortcut.superJustPressed) return; // Skip if it's the Super key itself triggering it
             GlobalStates.superReleaseMightTrigger = false;
         }
     }
